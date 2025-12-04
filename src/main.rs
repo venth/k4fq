@@ -1,22 +1,19 @@
+mod app;
+pub mod ports;
+mod adapterclap;
+mod predicates;
+
 use std::sync::Arc;
+use crate::app::App;
 
-use itertools::Itertools;
-
-use crate::di::Startable;
-
-mod domain;
-mod cli;
-mod console;
-mod properties;
-mod async_tools;
-mod di;
+use tokio;
 
 #[tokio::main]
 async fn main() {
-    let cli = cli::new();
-    let console = console::new();
-    let startable_console: Arc<dyn Startable> = console.clone();
-    let started_console = startable_console.start();
-    domain::services::run_app(std::env::args().collect_vec(), cli.clone(), console.clone()).await;
-    started_console.await.unwrap();
+    let command_parser = Arc::new(adapterclap::new());
+    let app = app::new(command_parser.clone());
+    app.run().await.unwrap();
 }
+
+#[cfg(test)] #[macro_use]
+extern crate assert_matches;
