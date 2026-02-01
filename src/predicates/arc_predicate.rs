@@ -61,7 +61,7 @@ where
         self.0.eval(variable)
     }
 
-    fn find_case(&self, expected: bool, variable: &Item) -> Option<reflection::Case> {
+    fn find_case(&'_ self, expected: bool, variable: &Item) -> Option<reflection::Case<'_>> {
         default_find_case(self, expected, variable)
     }
 }

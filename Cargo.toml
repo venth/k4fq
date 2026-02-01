@@ -8,7 +8,7 @@ rust-version = "1.91.1"
 
 [dependencies]
 # command line parsing
-clap = { version = "4.5.51", features = ["cargo"] }
+clap = { version = "4.5.51", features = ["cargo", "derive"] }
 # provides progress bar and log messages
 indicatif = "0.17.11"
 predicates = "3.1.3"
@@ -23,6 +23,7 @@ itertools = "0.12.1"
 uuid = { version = "1.18.1", features = ["v4", "fast-rng", "macro-diagnostics"] }
 futures = { version = "0.3.4" }
 async-trait = "0.1.75"
+log = "0.4.28"
 
 [dev-dependencies]
 # latest version - 0.12.0 doesn't contain kafka, so I used latest dev instead

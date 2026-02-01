@@ -1,9 +1,9 @@
-use crate::adapterclap::predicate_in;
-use crate::predicates::{ArcPredicate, PredicateArcExt};
+use crate::adapterclap::predicate_matching;
+use crate::predicates::ArcPredicate;
 use std::io::Error;
 
 pub fn parse(pattern: &str) -> Result<ArcPredicate<String>, Error> {
-    new(predicate_in::new(pattern, &','))
+    new(predicate_matching::new(pattern))
 }
 
 fn new(parsed_predicate: Result<ArcPredicate<String>, impl std::error::Error + Send + Sync + 'static>) -> Result<ArcPredicate<String>, Error> {

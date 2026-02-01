@@ -8,7 +8,7 @@ pub enum Errors {
 
 impl Display for Errors {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match (self) {
+        match self {
             Errors::UnknownError { msg } => write!(f, "[Unknown Error] {}", msg),
             Errors::InvalidQueryArgument { msg } => { write!(f, "[Invalid query command argument] {}", msg) }
         }

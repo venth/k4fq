@@ -4,6 +4,7 @@ use std::path::PathBuf;
 #[derive(Debug)]
 pub enum Command {
     Skip { cause: String },
+    ShowConfig { config: PathBuf },
     Query { config: PathBuf, cluster_matcher: BoxPredicate<String>, topic_matcher: BoxPredicate<String>, payload_matcher: BoxPredicate<String>},
 }
 
