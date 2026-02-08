@@ -9,6 +9,7 @@ use crate::ports::Command;
 use crate::predicates::{ArcPredicate, PredicateArcExt};
 use clap::Parser;
 use cli_struct::CliParser;
+use std::path::PathBuf;
 
 struct ClapCommandParser {}
 
@@ -19,6 +20,7 @@ pub fn new() -> impl ports::CommandParser {
 impl ClapCommandParser {
     fn matched_records(
         &self,
+        current_config: &PathBuf,
         clusters_predicate: &ArcPredicate<String>,
         topics_predicate: &ArcPredicate<String>,
         records: &QueryTopicsRecordsForCommands,
@@ -28,7 +30,7 @@ impl ClapCommandParser {
                 QueryTopicsRecordsCommands::Key { condition } => match condition {
                     QueryTopicsRecordsKeyCommands::Matching { predicate } => {
                         Command::Query {
-                            config: Default::default(),
+                            config: current_config.clone(),
                             cluster_matcher: clusters_predicate.clone(),
                             topic_matcher: topics_predicate.clone(),
                             payload_matcher: predicate.clone(),
@@ -36,32 +38,29 @@ impl ClapCommandParser {
                     }
                     QueryTopicsRecordsKeyCommands::In { predicate } => {
                         Command::Query {
-                            config: Default::default(),
+                            config: current_config.clone(),
                             cluster_matcher: clusters_predicate.clone(),
                             topic_matcher: topics_predicate.clone(),
                             payload_matcher: predicate.clone(),
                         }
-
                     }
                 },
                 QueryTopicsRecordsCommands::Payload { condition } => match condition {
                     QueryTopicsRecordsPayloadCommands::Containing { predicate } => {
                         Command::Query {
-                            config: Default::default(),
+                            config: current_config.clone(),
                             cluster_matcher: clusters_predicate.clone(),
                             topic_matcher: topics_predicate.clone(),
                             payload_matcher: predicate.clone(),
                         }
-
                     }
                     QueryTopicsRecordsPayloadCommands::In { predicate } => {
                         Command::Query {
-                            config: Default::default(),
+                            config: current_config.clone(),
                             cluster_matcher: clusters_predicate.clone(),
                             topic_matcher: topics_predicate.clone(),
                             payload_matcher: predicate.clone(),
                         }
-
                     }
                 },
             },
@@ -70,18 +69,19 @@ impl ClapCommandParser {
 
     fn matched_topics(
         &self,
+        current_config: &PathBuf,
         clusters_predicate: &ArcPredicate<String>,
         condition: &QueryTopicsCommands,
     ) -> Command {
         match condition {
             QueryTopicsCommands::Matching { predicate, records } => {
-                self.matched_records(clusters_predicate, predicate, records)
+                self.matched_records(current_config, clusters_predicate, predicate, records)
             }
             QueryTopicsCommands::Eq { predicate, records } => {
-                self.matched_records(clusters_predicate, predicate, records)
+                self.matched_records(current_config, clusters_predicate, predicate, records)
             }
             QueryTopicsCommands::In { predicate, records } => {
-                self.matched_records(clusters_predicate, predicate, records)
+                self.matched_records(current_config, clusters_predicate, predicate, records)
             }
         }
     }
@@ -95,22 +95,23 @@ impl ports::CommandParser for ClapCommandParser {
                     QueryCommands::Clusters { condition } => match condition {
                         QueryClustersCommands::Matching { predicate, topics } => match topics {
                             QueryClustersTopicsCommands::Topics { condition } => {
-                                self.matched_topics(predicate, condition)
+                                self.matched_topics(a.current_config(), predicate, condition)
                             }
                         },
                         QueryClustersCommands::In { predicate, topics } => match topics {
                             QueryClustersTopicsCommands::Topics { condition } => {
-                                self.matched_topics(predicate, condition)
+                                self.matched_topics(a.current_config(), predicate, condition)
                             }
                         },
 
                         QueryClustersCommands::Eq { predicate, topics } => match topics {
                             QueryClustersTopicsCommands::Topics { condition } => {
-                                self.matched_topics(predicate, condition)
+                                self.matched_topics(a.current_config(), predicate, condition)
                             }
                         }
                     },
                     QueryCommands::Topics { condition } => self.matched_topics(
+                        a.current_config(),
                         &predicates::prelude::predicate::always().arced(),
                         condition,
                     ),
