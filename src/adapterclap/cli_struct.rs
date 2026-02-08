@@ -47,13 +47,19 @@ pub enum QueryCommands {
 #[derive(Debug, Subcommand)]
 pub enum QueryClustersCommands {
     Matching {
-        #[arg(allow_hyphen_values = true, value_name = "pattern", required = true, value_parser = clap::builder::ValueParser::new(parser_matching::parse), help = "Regex pattern to match against the topics")]
+        #[arg(allow_hyphen_values = true, value_name = "pattern", required = true, value_parser = clap::builder::ValueParser::new(parser_matching::parse), help = "Regex pattern to match against the clusters")]
         predicate: ArcPredicate<String>,
         #[command(subcommand)]
         topics: QueryClustersTopicsCommands
     },
+    Eq {
+        #[arg(allow_hyphen_values = true, value_name = "pattern", required = true, value_parser = clap::builder::ValueParser::new(parser_eq::parse), help = "Not empty pattern to match against the clusters")]
+        predicate: ArcPredicate<String>,
+        #[command(subcommand)]
+        topics: QueryClustersTopicsCommands,
+    },
     In {
-        #[arg(allow_hyphen_values = true, value_name = "values", value_delimiter = ',', required = true, num_args = 1, value_parser = clap::builder::ValueParser::new(parser_in::parse), help = "Comma-separated topic names")]
+        #[arg(allow_hyphen_values = true, value_name = "values", value_delimiter = ',', required = true, num_args = 1, value_parser = clap::builder::ValueParser::new(parser_in::parse), help = "Comma-separated cluster names")]
         predicate: ArcPredicate<String>,
         #[command(subcommand)]
         topics: QueryClustersTopicsCommands

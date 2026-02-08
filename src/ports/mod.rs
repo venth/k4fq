@@ -1,11 +1,12 @@
 use predicates::BoxPredicate;
 use std::path::PathBuf;
+use crate::predicates::ArcPredicate;
 
 #[derive(Debug)]
 pub enum Command {
     Skip { cause: String },
     ShowConfig { config: PathBuf },
-    Query { config: PathBuf, cluster_matcher: BoxPredicate<String>, topic_matcher: BoxPredicate<String>, payload_matcher: BoxPredicate<String>},
+    Query { config: PathBuf, cluster_matcher: ArcPredicate<String>, topic_matcher: ArcPredicate<String>, payload_matcher: ArcPredicate<String>},
 }
 
 impl Command {

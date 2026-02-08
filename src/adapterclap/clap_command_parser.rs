@@ -1,8 +1,13 @@
-use crate::adapterclap::cli_struct::MainCommands;
-use crate::adapterclap::{cli_struct, parser_in, parser_matching};
+use crate::adapterclap::cli_struct;
+use crate::adapterclap::cli_struct::{
+    MainCommands, QueryClustersCommands, QueryClustersTopicsCommands, QueryCommands,
+    QueryTopicsCommands, QueryTopicsRecordsCommands, QueryTopicsRecordsForCommands,
+    QueryTopicsRecordsKeyCommands, QueryTopicsRecordsPayloadCommands,
+};
 use crate::ports;
 use crate::ports::Command;
-use clap::{arg, ArgAction, Parser};
+use crate::predicates::{ArcPredicate, PredicateArcExt};
+use clap::Parser;
 use cli_struct::CliParser;
 
 struct ClapCommandParser {}
@@ -12,104 +17,107 @@ pub fn new() -> impl ports::CommandParser {
 }
 
 impl ClapCommandParser {
-    fn record_payload_command() -> clap::Command {
-        clap::Command::new("payload")
-            .about("Queries records with the matching payload in the selected topics")
-            .subcommand(
-                clap::Command::new("containing")
-                    .about("payload contains content matching the regex pattern")
-                    .arg(
-                        arg!(<PATTERN> "Regex pattern to match against the payload's content")
-                            .required(true),
-                    ),
-            )
+    fn matched_records(
+        &self,
+        clusters_predicate: &ArcPredicate<String>,
+        topics_predicate: &ArcPredicate<String>,
+        records: &QueryTopicsRecordsForCommands,
+    ) -> Command {
+        match records {
+            QueryTopicsRecordsForCommands::ForClause { target } => match target {
+                QueryTopicsRecordsCommands::Key { condition } => match condition {
+                    QueryTopicsRecordsKeyCommands::Matching { predicate } => {
+                        Command::Query {
+                            config: Default::default(),
+                            cluster_matcher: clusters_predicate.clone(),
+                            topic_matcher: topics_predicate.clone(),
+                            payload_matcher: predicate.clone(),
+                        }
+                    }
+                    QueryTopicsRecordsKeyCommands::In { predicate } => {
+                        Command::Query {
+                            config: Default::default(),
+                            cluster_matcher: clusters_predicate.clone(),
+                            topic_matcher: topics_predicate.clone(),
+                            payload_matcher: predicate.clone(),
+                        }
+
+                    }
+                },
+                QueryTopicsRecordsCommands::Payload { condition } => match condition {
+                    QueryTopicsRecordsPayloadCommands::Containing { predicate } => {
+                        Command::Query {
+                            config: Default::default(),
+                            cluster_matcher: clusters_predicate.clone(),
+                            topic_matcher: topics_predicate.clone(),
+                            payload_matcher: predicate.clone(),
+                        }
+
+                    }
+                    QueryTopicsRecordsPayloadCommands::In { predicate } => {
+                        Command::Query {
+                            config: Default::default(),
+                            cluster_matcher: clusters_predicate.clone(),
+                            topic_matcher: topics_predicate.clone(),
+                            payload_matcher: predicate.clone(),
+                        }
+
+                    }
+                },
+            },
+        }
     }
 
-    fn record_key_command() -> clap::Command {
-        clap::Command::new("key")
-            .about("Queries records with the matching key in the selected topics")
-            .subcommand(
-                clap::Command::new("in")
-                    .about("Selects records with the matching key in the selected topics")
-                    .arg(
-                        arg!(<VALUES> "Comma-separated key values")
-                            .required(true)
-                            .value_delimiter(',')
-                            .num_args(1..)
-                            .value_parser(clap::builder::ValueParser::new(parser_in::parse))
-                            .action(ArgAction::Append),
-                    ),
-            )
-            .subcommand(
-                clap::Command::new("matching")
-                    .about("Selects records with the matching key in the selected topics")
-                    .arg(
-                        arg!(<PATTERN> "Regex pattern to match against the key values")
-                            .required(true)
-                            .value_parser(clap::builder::ValueParser::new(parser_matching::parse)),
-                    ),
-            )
-            .subcommand(clap::Command::new("eq"))
-    }
-
-    fn topics_command() -> clap::Command {
-        clap::Command::new("topics")
-            .about("Selects topics using criteria")
-            .subcommand(
-                clap::Command::new("in")
-                    .about("Select topics in the given collection of comma-separated values")
-                    .arg(
-                        arg!(<VALUES> "Comma-separated topic names")
-                            .required(true)
-                            .value_delimiter(',')
-                            .num_args(1..)
-                            .value_parser(clap::builder::ValueParser::new(parser_in::parse))
-                            .action(ArgAction::Append),
-                    )
-                    .subcommand(
-                        clap::Command::new("for")
-                            .about("Queries records in the matching topics for the given criteria")
-                            .subcommand(Self::record_key_command())
-                            .subcommand(Self::record_payload_command()),
-                    ),
-            )
-            .subcommand(
-                clap::Command::new("matching")
-                    .about("Select topics matching the regex pattern")
-                    .arg(
-                        arg!(<PATTERN> "Regex pattern to match against the topics")
-                            .required(true)
-                            .value_parser(clap::builder::ValueParser::new(parser_matching::parse)),
-                    )
-                    .subcommand(
-                        clap::Command::new("for")
-                            .about("Queries records in the matching topics for the given criteria")
-                            .subcommand(Self::record_key_command())
-                            .subcommand(Self::record_payload_command()),
-                    ),
-            )
-            .subcommand(
-                clap::Command::new("eq")
-                    .about("Select topics equal to the given value")
-                    .arg(arg!(<VALUE> "Topic name").required(true))
-                    .subcommand(
-                        clap::Command::new("for")
-                            .about("Queries records in the matching topics for the given criteria")
-                            .subcommand(Self::record_key_command())
-                            .subcommand(Self::record_payload_command()),
-                    ),
-            )
+    fn matched_topics(
+        &self,
+        clusters_predicate: &ArcPredicate<String>,
+        condition: &QueryTopicsCommands,
+    ) -> Command {
+        match condition {
+            QueryTopicsCommands::Matching { predicate, records } => {
+                self.matched_records(clusters_predicate, predicate, records)
+            }
+            QueryTopicsCommands::Eq { predicate, records } => {
+                self.matched_records(clusters_predicate, predicate, records)
+            }
+            QueryTopicsCommands::In { predicate, records } => {
+                self.matched_records(clusters_predicate, predicate, records)
+            }
+        }
     }
 }
 
 impl ports::CommandParser for ClapCommandParser {
     fn parse(&self, args: &Vec<String>) -> Command {
         CliParser::try_parse_from(args)
-            .map(|a| {
-                match (a.parsed_command()) {
-                    MainCommands::Query { .. } => { todo!() }
-                    MainCommands::ShowConfig => { Command::ShowConfig { config: a.current_config().clone() } }
-                }
+            .map(|a| match (a.parsed_command()) {
+                MainCommands::Query { command } => match command {
+                    QueryCommands::Clusters { condition } => match condition {
+                        QueryClustersCommands::Matching { predicate, topics } => match topics {
+                            QueryClustersTopicsCommands::Topics { condition } => {
+                                self.matched_topics(predicate, condition)
+                            }
+                        },
+                        QueryClustersCommands::In { predicate, topics } => match topics {
+                            QueryClustersTopicsCommands::Topics { condition } => {
+                                self.matched_topics(predicate, condition)
+                            }
+                        },
+
+                        QueryClustersCommands::Eq { predicate, topics } => match topics {
+                            QueryClustersTopicsCommands::Topics { condition } => {
+                                self.matched_topics(predicate, condition)
+                            }
+                        }
+                    },
+                    QueryCommands::Topics { condition } => self.matched_topics(
+                        &predicates::prelude::predicate::always().arced(),
+                        condition,
+                    ),
+                },
+                MainCommands::ShowConfig => Command::ShowConfig {
+                    config: a.current_config().clone(),
+                },
             })
             .unwrap_or_else(|e| {
                 eprint!("{}", e);
@@ -118,60 +126,6 @@ impl ports::CommandParser for ClapCommandParser {
                     e
                 ));
             })
-
-        /*        clap::command!()
-                   .no_binary_name(true)
-                   .arg_required_else_help(true)
-                   .arg(
-                       arg!(--config <FILE >"Location of the configuration file")
-                           .value_parser(value_parser!(PathBuf))
-                           .required(false)
-                           .default_value(OsStr::new(DEFAULT_CONFIG_PATH.get_or_init(|| {
-                               self.default_config_path().to_str().unwrap().to_string()
-                           }))),
-                   )
-                   .subcommand(
-                       clap::Command::new("query")
-                           .subcommand(
-                               clap::Command::new("clusters")
-                                   .subcommand(clap::Command::new("in"))
-                                   .subcommand(clap::Command::new("matching"))
-                                   .subcommand(clap::Command::new("eq")),
-                           )
-                           .subcommand(
-                               Self::topics_command(),
-                           )
-                   )
-                   .try_get_matches_from(args)
-                   .map(|m| match m.subcommand() {
-                       None => Command::skip_because_of("help or version chosen"),
-                       Some((cmd, matching)) => {
-                           match cmd {
-                               "query" => {
-                                   match matching.subcommand() {
-                                       None => Command::skip_because_of("help or version chosen"),
-                                       Some((query_subcommand, m)) => {
-                                           match (query_subcommand) {
-                                               "topics" => match m.subcommand() {
-                                                   None => todo!(),
-                                                   Some((topics_condition_name, topics_condition)) => {
-                                                       match topics_condition_name { &_ => todo!() }
-                                                   },
-                                               },
-                                               _ => todo!()
-                                           }
-                                       }
-                                   }
-                               }
-                               &_ => { todo!() }
-                           }
-                       }
-                   })
-                .unwrap_or_else(|e| {
-               eprint!("{}", e);
-               return Command::skip_because_of(format!("Unrecognized command or flag. The details: {}", e));
-           })
-        */
     }
 }
 
@@ -180,9 +134,9 @@ mod tests {
     use super::ClapCommandParser;
     use crate::adapterclap::cli_struct::CliParser;
     use crate::ports::{Command, CommandParser};
+    use log::{error, warn};
     use proptest::prelude::{prop, Strategy};
     use proptest::{prop_compose, prop_oneof, proptest};
-    use log::{error, warn};
 
     fn parser() -> impl CommandParser {
         ClapCommandParser {}
@@ -222,7 +176,13 @@ mod tests {
     #[test]
     fn prefers_config_flag_over_default_config_value_if_config_flag_is_passed() {
         let some_config_path = "/tmp/config.yaml";
-        let a = args_of(format!("--config {some_config_path} show-config", some_config_path = some_config_path).as_str());
+        let a = args_of(
+            format!(
+                "--config {some_config_path} show-config",
+                some_config_path = some_config_path
+            )
+            .as_str(),
+        );
         let result = parser().parse(&a);
 
         assert_matches!(result, Command::ShowConfig { config: c } if c.to_str().unwrap() == some_config_path);
