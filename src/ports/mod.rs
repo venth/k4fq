@@ -1,6 +1,9 @@
-use predicates::BoxPredicate;
-use std::path::PathBuf;
+mod dynamic_config;
+
+use crate::app::Errors;
+pub use crate::ports::dynamic_config::DynamicConfig;
 use crate::predicates::ArcPredicate;
+use std::path::PathBuf;
 
 #[derive(Debug)]
 pub enum Command {
@@ -28,4 +31,8 @@ impl From<String> for Topic {
 
 pub trait CommandParser: Send + Sync {
     fn parse(&self, args: &Vec<String>) -> Command;
+}
+
+pub trait ConfigurationSource: Send + Sync {
+    fn load(&self, config: &PathBuf) -> Result<DynamicConfig, Errors>;
 }
