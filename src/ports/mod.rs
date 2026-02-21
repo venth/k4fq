@@ -36,3 +36,14 @@ pub trait CommandParser: Send + Sync {
 pub trait ConfigurationSource: Send + Sync {
     fn load(&self, config: &PathBuf) -> Result<DynamicConfig, Errors>;
 }
+
+pub trait Reporter: Send {
+    fn stage(&self, stage_name: &str);
+    fn inc(&self, delta: u64);
+    fn finish(self: Box<Self>);
+}
+
+pub trait ReporterFactory: Send + Sync {
+    fn create_unchained_reporter(&self, name: &str) -> Box<dyn Reporter>;
+    fn create_chained_reporter(&self, name: &str, len: u64) -> Box<dyn Reporter>;
+}
