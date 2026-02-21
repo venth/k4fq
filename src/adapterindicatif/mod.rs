@@ -43,6 +43,10 @@ impl Reporter for UnchainedIndicatifReporter {
         self.progress.set_message(format!("{}", stage_name));
     }
 
+    fn info(&self, msg: &str) {
+        self.progress.println(msg);
+    }
+
     fn inc(&self, delta: u64) {
         self.progress.inc(delta);
     }
@@ -67,6 +71,10 @@ struct IndicatifReporter {
 impl Reporter for IndicatifReporter {
     fn stage(&self, stage_name: &str) {
         self.progress.set_message(format!("{}", stage_name));
+    }
+
+    fn info(&self, msg: &str) {
+        self.progress.println(msg);
     }
 
     fn inc(&self, delta: u64) {

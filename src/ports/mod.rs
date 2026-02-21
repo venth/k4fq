@@ -39,6 +39,7 @@ pub trait ConfigurationSource: Send + Sync {
 
 pub trait Reporter: Send {
     fn stage(&self, stage_name: &str);
+    fn info(&self, msg: &str);
     fn inc(&self, delta: u64);
     fn finish(self: Box<Self>);
 }

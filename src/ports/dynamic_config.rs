@@ -1,10 +1,11 @@
+use std::fmt::Display;
 use serde::de::DeserializeOwned;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json;
 
 // transparent guarantees that the type is the same as the underlying representation
 #[repr(transparent)]
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[derive(Debug, Clone)]
 pub struct DynamicConfig(serde_json::Value);
 
@@ -32,6 +33,12 @@ impl DynamicConfig {
 
     pub fn try_into_struct<T: DeserializeOwned>(self) -> Result<T, serde_json::Error> {
         serde_json::from_value(self.0)
+    }
+}
+
+impl Display for DynamicConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serde_yaml::to_string(&self.0).unwrap())
     }
 }
 

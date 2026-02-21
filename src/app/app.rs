@@ -26,20 +26,21 @@ struct AppImpl {
 
 impl App for AppImpl {
     async fn run(&self) -> Result<(), errors::Errors> {
-        let reporter = self.reporter_factory.create_unchained_reporter("");
-        reporter.stage("Starting k4fq");
+        let reporter = self.reporter_factory.create_unchained_reporter("k4fq");
         let parsed_command = self.command_parser.parse(&(env::args().collect()));
         reporter.inc(1);
-        reporter.stage("Parsed command");
         match parsed_command {
             ports::Command::ShowConfig { config } => {
                 let config = self.configuration_source.load(&config)?;
-                todo!()
+                reporter.info(&format!("{}", config));
+                reporter.inc(1);
             }
             ports::Command::Query { .. } => todo!(),
-            ports::Command::Skip { .. } => todo!(),
+            ports::Command::Skip { cause } => reporter.stage(format!("Skipped. The cause: {}", cause).as_str()),
         }
+        reporter.inc(1);
         reporter.finish();
+        Ok(())
     }
 }
 
@@ -94,6 +95,7 @@ mod tests {
         SomeReporter {}
         impl ports::Reporter for SomeReporter {
             fn stage(&self, stage_name: &str) { todo!() }
+            fn info(&self, message: &str) { todo!() }
             fn inc(&self, delta: u64) { todo!() }
             fn finish(self: Box<Self>) { todo!() }
         }

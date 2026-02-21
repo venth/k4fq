@@ -9,8 +9,8 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 
 #[derive(Debug, Parser)] // requires `derive` feature
-#[command(name = "k4fq")]
-#[command(about = "A fictional versioning CLI", long_about = None, no_binary_name = true, arg_required_else_help = true)]
+#[command(name = "k4fq", help_expected = true)]
+#[command(about = "A fictional versioning CLI", long_about = None, no_binary_name = false, arg_required_else_help = true)]
 pub struct CliParser {
     #[arg(long, default_value = OsStr::new(DEFAULT_CONFIG_PATH.get_or_init(|| {
                                 CliParser::default_config_path().to_str().unwrap().to_string()

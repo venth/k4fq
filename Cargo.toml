@@ -16,6 +16,7 @@ rdkafka = { version = "0.37.0", features = ["cmake-build"] }
 # --- serde & figment used to load and manage configurations --- #
 serde = "1.0.228"
 serde_json = "1.0.145"
+serde_yaml = "0.9"
 erased-serde = "0.4.9"
 figment = { version = "0.10", features = ["toml", "yaml", "json", "env"] }
 # -------------------------------------------------------------- #
