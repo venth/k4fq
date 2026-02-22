@@ -36,7 +36,7 @@ impl App for AppImpl {
                 reporter.inc(1);
             }
             ports::Command::Query { .. } => todo!(),
-            ports::Command::Skip { cause } => reporter.stage(format!("Skipped. The cause: {}", cause).as_str()),
+            ports::Command::Skip { cause } => reporter.info(format!("Skipped. The cause: {}", cause).as_str()),
         }
         reporter.inc(1);
         reporter.finish();
@@ -57,14 +57,11 @@ mod tests {
 
     #[tokio::test]
     async fn runs_app() {
-        let some_error = Errors::UnknownError {
-            msg: "ups".to_string(),
-        };
-        let expected_error = some_error.clone();
+        let expected_error = "some error";
         let mut command_parser = MockSomeCommandParser::new();
         command_parser
             .expect_parse()
-            .return_once(move |_| Command::skip_because_of("just for testing"));
+            .return_once(move |_| Command::skip_because_of(expected_error.to_string()));
         let mut config_source = MockSomeConfigurationSource::new();
         config_source.expect_load().return_once(move |_| {
             Ok(ports::DynamicConfig::from(
@@ -74,13 +71,16 @@ mod tests {
 
         let mut reporter_factory = MockSomeReporterFactory::new();
         let mut some_reporter = MockSomeReporter::new();
+        some_reporter.expect_inc().return_const(());
+        some_reporter.expect_info().return_const(());
+        some_reporter.expect_finish().return_const(());
+
         reporter_factory.expect_create_unchained_reporter()
             .return_once(move |_| Box::new(some_reporter));
 
         let app = app::new(Arc::new(command_parser), Arc::new(config_source), Arc::new(reporter_factory));
         let result = app.run().await;
-        assert!(result.is_err());
-        assert_eq!(expected_error, result.err().unwrap());
+        assert!(result.is_ok());
     }
 
     mock! {
