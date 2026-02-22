@@ -26,7 +26,7 @@ struct AppImpl {
 
 impl App for AppImpl {
     async fn run(&self) -> Result<(), errors::Errors> {
-        let reporter = self.reporter_factory.create_unchained_reporter("k4fq");
+        let reporter = self.reporter_factory.create_reporter("k4fq");
         let parsed_command = self.command_parser.parse(&(env::args().collect()));
         reporter.inc(1);
         match parsed_command {
@@ -75,7 +75,7 @@ mod tests {
         some_reporter.expect_info().return_const(());
         some_reporter.expect_finish().return_const(());
 
-        reporter_factory.expect_create_unchained_reporter()
+        reporter_factory.expect_create_reporter()
             .return_once(move |_| Box::new(some_reporter));
 
         let app = app::new(Arc::new(command_parser), Arc::new(config_source), Arc::new(reporter_factory));
@@ -86,8 +86,7 @@ mod tests {
     mock! {
         SomeReporterFactory {}
         impl ports::ReporterFactory for SomeReporterFactory {
-            fn create_unchained_reporter(&self, name: &str) -> Box<dyn Reporter> { todo!() }
-            fn create_chained_reporter(&self, name: &str, len: u64) -> Box<dyn Reporter> { todo!() }
+            fn create_reporter(&self, name: &str) -> Box<dyn Reporter> { todo!() }
         }
     }
 

@@ -45,6 +45,5 @@ pub trait Reporter: Send {
 }
 
 pub trait ReporterFactory: Send + Sync {
-    fn create_unchained_reporter(&self, name: &str) -> Box<dyn Reporter>;
-    fn create_chained_reporter(&self, name: &str, len: u64) -> Box<dyn Reporter>;
+    fn create_reporter(&self, name: &str) -> Box<dyn Reporter>;
 }
